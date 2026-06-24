@@ -1,3 +1,44 @@
+# Claude skill (barba-video-downloader)
+
+This repo ships a Claude skill in `skill/barba-video-downloader/` that lets a
+Claude session download and transcribe media by talking to this service. Install
+it into `~/.claude/skills/` so Claude can use it.
+
+> **Only works on the local network.** The skill calls the service at
+> `http://barbabook.local:5001/`, which is reachable **only when your machine is
+> on the same Wi-Fi / LAN as `barbabook`** and the server is running. Off the
+> network, the skill still loads but every command fails to connect — this is
+> expected, not a bug.
+
+**Option 1 — ask Claude (easiest).** In a Claude session, paste:
+
+> Install the skill from https://github.com/HakS/yt-dlp-backend — copy the
+> `skill/barba-video-downloader` folder into `~/.claude/skills/`.
+
+**Option 2 — one line in a terminal:**
+
+```bash
+git clone https://github.com/HakS/yt-dlp-backend /tmp/bvd && \
+  mkdir -p ~/.claude/skills && \
+  cp -R /tmp/bvd/skill/barba-video-downloader ~/.claude/skills/ && \
+  rm -rf /tmp/bvd
+```
+
+If you already have the repo cloned, just copy the folder:
+
+```bash
+mkdir -p ~/.claude/skills && \
+  cp -R skill/barba-video-downloader ~/.claude/skills/
+```
+
+**Option 3 — upload in the app:** download this repo as a ZIP, unzip it, then in
+Claude Desktop go to **Customize → Skills → Create skill** and upload the
+`barba-video-downloader` folder (zipped).
+
+After installing, restart/refresh your Claude session so it picks up the skill.
+To update later, re-run any option to overwrite with the latest version. See
+`skill/barba-video-downloader/README.md` for usage details.
+
 # Configuration (env vars)
 
 The server reads two optional environment variables; both have defaults so it
@@ -5,17 +46,19 @@ runs out of the box on a typical macOS/Homebrew setup:
 
 - `FFMPEG_DIR` — directory containing `ffmpeg` (default `/opt/homebrew/bin`).
 - `WHISPERX_PYTHON` — absolute path to the Python interpreter that has whisperx
-  + torch installed (default `python3`). `/transcribe` will fail if this points
-  at an interpreter without whisperx. On `barbabook` this is the dedicated pyenv
-  interpreter, e.g.:
+  + torch installed. When unset, the server probes a few candidates at startup
+  (the `~/.pyenv/versions/3.11.13` interpreter, then `python3.11`, then
+  `python3`) and uses the first one that can `import whisperx`, so it works out
+  of the box on `barbabook`. Set this explicitly to override the probe or when
+  whisperx lives elsewhere:
 
   ```bash
   export WHISPERX_PYTHON="$HOME/.pyenv/versions/3.11.13/bin/python"
   python app.py
   ```
 
-Set it in your shell profile or a launch wrapper so the value isn't hard-coded
-in the source.
+  Note: a bare `python3` in a server's minimal PATH often resolves to Homebrew's
+  Python (no whisperx), which is why the probe avoids that as the default.
 
 # Examples of usage
 
