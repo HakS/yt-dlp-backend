@@ -1,21 +1,27 @@
 # Claude skill (barba-video-downloader)
 
-This repo ships a Claude skill in `skill/barba-video-downloader/` that lets a
-Claude session download and transcribe media by talking to this service. Install
-it into `~/.claude/skills/` so Claude can use it.
+This repo ships a Claude skill that lets a Claude session download and
+transcribe media by talking to this service.
 
-> **Only works on the local network.** The skill calls the service at
+> **Only works on the home network.** The skill calls the service at
 > `http://barbabook.local:5001/`, which is reachable **only when your machine is
-> on the same Wi-Fi / LAN as `barbabook`** and the server is running. Off the
-> network, the skill still loads but every command fails to connect — this is
-> expected, not a bug.
+> on the same Wi-Fi / LAN as `barbabook`** and the server is running.
 
-**Option 1 — ask Claude (easiest).** In a Claude session, paste:
+---
 
-> Install the skill from https://github.com/HakS/yt-dlp-backend — copy the
-> `skill/barba-video-downloader` folder into `~/.claude/skills/`.
+## Install the skill (pick one)
 
-**Option 2 — one line in a terminal:**
+### Option 1 — Download the zip (easiest, no terminal needed)
+
+1. **[Download barba-video-downloader.zip](https://github.com/HakS/yt-dlp-backend/raw/main/barba-video-downloader.zip)**
+2. In **Claude Desktop** → **Customize → Skills → Create skill** → upload the zip.
+3. Restart your Claude session.
+
+Done. The skill is active.
+
+---
+
+### Option 2 — One line in a terminal
 
 ```bash
 git clone https://github.com/HakS/yt-dlp-backend /tmp/bvd && \
@@ -24,20 +30,21 @@ git clone https://github.com/HakS/yt-dlp-backend /tmp/bvd && \
   rm -rf /tmp/bvd
 ```
 
-If you already have the repo cloned, just copy the folder:
+---
 
-```bash
-mkdir -p ~/.claude/skills && \
-  cp -R skill/barba-video-downloader ~/.claude/skills/
-```
+### Option 3 — Ask Claude to install it
 
-**Option 3 — upload in the app:** download this repo as a ZIP, unzip it, then in
-Claude Desktop go to **Customize → Skills → Create skill** and upload the
-`barba-video-downloader` folder (zipped).
+In a Claude session paste:
+
+> Install the skill from https://github.com/HakS/yt-dlp-backend — copy the
+> `skill/barba-video-downloader` folder into `~/.claude/skills/`.
+
+---
 
 After installing, restart/refresh your Claude session so it picks up the skill.
-To update later, re-run any option to overwrite with the latest version. See
-`skill/barba-video-downloader/README.md` for usage details.
+See `skill/barba-video-downloader/README.md` for usage details.
+
+---
 
 # Configuration (env vars)
 
@@ -57,99 +64,42 @@ runs out of the box on a typical macOS/Homebrew setup:
   python app.py
   ```
 
-  Note: a bare `python3` in a server's minimal PATH often resolves to Homebrew's
-  Python (no whisperx), which is why the probe avoids that as the default.
+---
 
-# Examples of usage
+# /download
 
-```
-http://127.0.0.1:5000/download?
-url=
-https://www.youtube.com/watch?v=mSevVBCAe6Y
-&download_sections=*
-0:1:1-
-0:1:10
-&outtmpl=video.webm
-&format=bestvideo
-
-
-
-
-
-http://127.0.0.1:5000/download?
-url=
-https://www.youtube.com/shorts/lkO95SCW40I
-&format=bestvideo
-
-http://127.0.0.1:5000/download?
-url=
-https://www.youtube.com/shorts/rpLlhfO2Llo
-&outtmpl=video.mp4
-&format=bestvideo
-
-http://127.0.0.1:5000/download?
-url=
-https://www.youtube.com/watch?v=0_GEzVYOkYg
-&x
-&outtmpl=audio.opus
-
-
-
-http://127.0.0.1:5000/download?
-url=  
-https://www.youtube.com/watch?v=Q5OMHwYcgpE
-&download_sections=*
-0:3:21-
-0:3:50
-&outtmpl=flamenco.opus
-&x
-  
-
-
-
-http://127.0.0.1:5000/download?
-url=
-https://www.instagram.com/p/DGu_b-yK-gj/
-&outtmpl=tal.mp3
-
-http://127.0.0.1:5000/download?
-url=
-https://www.youtube.com/watch?v=hBBOjCiFcuo
-
-http://127.0.0.1:5000/download?
-url=
-https://www.youtube.com/watch?v=U_LXkVU1MLs
-&format=bestaudio
-
-
-https://www.youtube.com/watch?v=0aHl15zQOsg&list=PLs-YFAlH63L-TER_jnvnTxnrfQJcqyvZW&index=2
-```
-
-# /transcribe
-
-Downloads ONLY the audio of a URL and transcribes it with whisperx (run
-out-of-process against the local pyenv install). Returns JSON in a token-cheap
-shape meant for AI agents.
+Downloads video or audio from a URL via yt-dlp.
 
 Query parameters:
 
-- `url` (required) — the media URL.
-- `response_format` — `segments` (default), `text`, or `full`.
-  - `segments`: `{ language, duration, text, segments: [{ start, end, text }] }`
-  - `text`: `{ language, text }` (cheapest — transcript only)
-  - `full`: raw whisperx JSON, including word-level alignments
-- `model` — Whisper model name (default `small`; e.g. `base`, `medium`, `large-v3`).
-- `language` — language code (e.g. `en`); omit to auto-detect.
-- `task` — `transcribe` (default) or `translate` (X → English).
-- `cookies_from_browser` — same form as `/download`, for gated sources.
+| Param | Default | Notes |
+|---|---|---|
+| `url` | **required** | The media URL. |
+| `outtmpl` | `%(title).16s.%(ext)s` | Output filename. |
+| `format` | `bestvideo` | yt-dlp format string. |
+| `x` | — | Empty flag → audio-only. |
+| `download_sections` | — | Time range `H:MM:SS-H:MM:SS`. |
+| `cookies_from_browser` | — | e.g. `chrome` for login-gated content. |
 
-```
-# Default: timestamped segments + full text
-http://127.0.0.1:5001/transcribe?url=https://www.youtube.com/watch?v=mSevVBCAe6Y
+---
 
-# Just the transcript text, faster model
-http://127.0.0.1:5001/transcribe?url=https://www.youtube.com/watch?v=mSevVBCAe6Y&response_format=text&model=base
+# /transcribe
 
-# Full whisperx JSON with word-level timestamps, forced language
-http://127.0.0.1:5001/transcribe?url=https://www.youtube.com/watch?v=mSevVBCAe6Y&response_format=full&language=en
-```
+Downloads ONLY the audio of a URL and transcribes it with whisperx. Returns
+JSON in a token-cheap shape meant for AI agents.
+
+Query parameters:
+
+| Param | Default | Notes |
+|---|---|---|
+| `url` | **required** | The media URL. |
+| `response_format` | `segments` | `text`, `segments`, or `full`. |
+| `model` | `small` | `tiny`, `base`, `small`, `medium`, `large-v3`. |
+| `language` | auto-detect | ISO-639-1 code, e.g. `en`. |
+| `task` | `transcribe` | `translate` → English. |
+| `cookies_from_browser` | — | Same as `/download`. |
+
+Response shapes:
+- `text`: `{ language, text }`
+- `segments`: `{ language, duration, text, segments: [{ start, end, text }] }`
+- `full`: raw whisperx JSON with word-level alignments
