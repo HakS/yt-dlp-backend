@@ -13,7 +13,7 @@ transcribe media by talking to this service.
 
 ### Option 1 — Download the zip (easiest, no terminal needed)
 
-1. **[Download barba-video-downloader.zip](https://github.com/HakS/yt-dlp-backend/raw/main/barba-video-downloader.zip)**
+1. **[Download barba-video-downloader.skill](https://github.com/HakS/yt-dlp-backend/raw/main/barba-video-downloader.skill)**
 2. In **Claude Desktop** → **Customize → Skills → Create skill** → upload the zip.
 3. Restart your Claude session.
 
